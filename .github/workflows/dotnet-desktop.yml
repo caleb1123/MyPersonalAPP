@@ -2,7 +2,7 @@ name: Deploy Docker
 
 on:
   push:
-    branches: ["main"]   # ❗ chỉ chạy khi bạn push
+    branches: ["main"]
 
 jobs:
   deploy:
@@ -12,10 +12,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build & Run Docker
+      # 🔥 TẠO FILE .env TỪ SECRETS
+      - name: Create .env file
         run: |
-          docker compose down
-          docker compose up -d --build
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+
+      # 🔥 DỌN CONTAINER CŨ (KHÔNG XÓA DATA)
+      - name: Stop old containers
+        run: docker compose down || true
+
+      # 🔥 BUILD + RUN
+      - name: Build & Run Docker
+        run: docker compose up -d --build
 
       - name: Check containers
         run: docker ps
